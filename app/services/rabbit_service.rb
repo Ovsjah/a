@@ -1,8 +1,6 @@
 class RabbitService
   class << self
     def call(name, queue)
-      @name = name
-      
       setup_reply_queue
       xchange.publish(name, routing_key: queue,
                       correlation_id: call_id,
@@ -14,7 +12,7 @@ class RabbitService
     private
 
       def call_id
-        @call_id ||= "#{@name.hash}"
+        @call_id ||= SecureRandom.urlsafe_base64
       end
 
       def xchange
