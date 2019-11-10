@@ -6,6 +6,6 @@ class Item < ApplicationRecord
   private
 
     def item_cost
-      self.cost = RabbitService.call(name, 'item_cost')
+      self.cost = RabbitService.call(name, 'item_cost') if name
     end
 end

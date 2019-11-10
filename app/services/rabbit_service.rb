@@ -5,9 +5,6 @@ class RabbitService
       xchange.publish(name, routing_key: queue, reply_to: reply_queue.name)
       @lock.synchronize { @condition.wait(@lock) }
       @response
-    ensure
-      puts "Connection is closed in `a`"
-      connection.close
     end
 
     private
