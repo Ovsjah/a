@@ -1,13 +1,21 @@
 class RabbitService
   class << self
     def call(name, queue)
+      @name = name
+      
       setup_reply_queue
-      xchange.publish(name, routing_key: queue, reply_to: reply_queue.name)
+      xchange.publish(name, routing_key: queue,
+                      correlation_id: call_id,
+                      reply_to: reply_queue.name)
       @lock.synchronize { @condition.wait(@lock) }
       @response
     end
 
     private
+
+      def call_id
+        @call_id ||= "#{@name.hash}"
+      end
 
       def xchange
         @xchange ||= channel.default_exchange
@@ -30,8 +38,10 @@ class RabbitService
         @condition = ConditionVariable.new
 
         reply_queue.subscribe do |_delivery_info, properties, item_cost|
-          @response = item_cost
-          @lock.synchronize { @condition.signal }
+          if properties[:correlation_id] == call_id
+            @response = item_cost
+            @lock.synchronize { @condition.signal }
+          end
         end
       end
   end
